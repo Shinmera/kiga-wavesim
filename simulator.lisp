@@ -11,7 +11,10 @@
    (%height :initarg :height :accessor height)
    (%current :initarg :environment :initform NIL :accessor current)
    (%next :accessor next)
-   (%previous :accessor previous))
+   (%previous :accessor previous)
+   (%dd :initarg :dd :initform 1.0 :accessor dd)
+   (%dt :initarg :dt :initform 3.0 :accessor dt)
+   (%c :initarg :c :initform 1.0 :accessor c))
   (:documentation ""))
 
 (defmethod initialize-instance :after ((env wave-environment) &rest rest)
@@ -41,19 +44,21 @@
      (* -2 (aref cur y x))
      (aref pre y x)))
 
-(defgeneric advance (env &key dd dt c)
-  (:method ((env wave-environment) &key (dd 1.0) (dt 3.0) (c 1.0))
-    (let ((next (next env))
-          (current (current env))
-          (previous (previous env))
-          (first (previous env)))
-      (loop for y from 1 below (1- (array-dimension next 0))
-            do (loop for x from 1 below (1- (array-dimension next 1))
-                     do (setf (aref next y x)
-                              (compute-next x y current previous dt dd c))))
-      (setf (next env) first
-            (previous env) current
-            (current env) next))))
+(defun advance (env)
+  (let ((next (next env))
+        (current (current env))
+        (previous (previous env))
+        (first (previous env))
+        (dt (dt env))
+        (dd (dd env))
+        (c (c env)))
+    (loop for y from 1 below (1- (array-dimension next 0))
+          do (loop for x from 1 below (1- (array-dimension next 1))
+                   do (setf (aref next y x)
+                            (compute-next x y current previous dt dd c))))
+    (setf (next env) first
+          (previous env) current
+          (current env) next)))
 
 (defgeneric start-wave (env x y magnitude)
   (:method ((env wave-environment) x y magnitude)
