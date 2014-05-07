@@ -60,7 +60,6 @@
           (previous env) current
           (current env) next)))
 
-(defgeneric start-wave (env x y magnitude)
-  (:method ((env wave-environment) x y magnitude)
-    (format T "WAVE: ~d/~d~%" x y)
-    (setf (aref (current env) y x) magnitude)))
+(defun start-wave (env x y magnitude)
+  (format T "WAVE: ~d/~d~%" x y)
+  (setf (aref (current env) y x) magnitude))
