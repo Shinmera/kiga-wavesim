@@ -7,7 +7,7 @@
 (in-package #:org.tymoonnext.kiga.wavesim)
 
 (defvar *thread* NIL)
-(defparameter *env* NIL)
+(defvar *env*)
 (defparameter *window-size* 500)
 (defparameter *granularity* 7)
 (defparameter *spacing* 5)
