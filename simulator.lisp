@@ -14,7 +14,15 @@
    (%previous :accessor previous)
    (%dd :initarg :dd :initform 1.0 :accessor dd)
    (%dt :initarg :dt :initform 3.0 :accessor dt)
-   (%c :initarg :c :initform 1.0 :accessor c))
+   (%c :initarg :c :initform 1.0 :accessor c)
+   (%walls :initarg :walls :initform () :accessor walls))
+  (:documentation ""))
+
+(defclass wall ()
+  ((%x :initarg :x :initform (error "X required") :accessor x)
+   (%y :initarg :y :initform (error "Y required") :accessor y)
+   (%w :initarg :w :initform (error "W required") :accessor w)
+   (%h :initarg :h :initform (error "H required") :accessor h))
   (:documentation ""))
 
 (defmethod initialize-instance :after ((env wave-environment) &rest rest)
@@ -44,6 +52,16 @@
      (* -2 (aref cur y x))
      (aref pre y x)))
 
+(defun compute-walls (env x y)
+  (dolist (wall (walls env))
+    (when (and (>= x (x wall))
+               (>= y (y wall))
+               (< x (+ (x wall) (w wall)))
+               (< y (+ (y wall) (h wall))))
+      (return-from compute-walls (min (+ (x wall) (w wall))
+                                      (1- (width env))))))
+  x)
+
 (defun advance (env)
   (let ((next (next env))
         (current (current env))
@@ -54,12 +72,31 @@
         (c (c env)))
     (loop for y from 1 below (1- (array-dimension next 0))
           do (loop for x from 1 below (1- (array-dimension next 1))
-                   do (setf (aref next y x)
+                   do (setf x (compute-walls env x y)
+                            (aref next y x)
                             (compute-next x y current previous dt dd c))))
     (setf (next env) first
           (previous env) current
           (current env) next)))
 
 (defun start-wave (env x y magnitude)
-  (format T "WAVE: ~d/~d~%" x y)
-  (setf (aref (current env) y x) magnitude))
+  (when (and (< x (width env))
+             (< y (height env))
+             (> x 0)
+             (> y 0))
+    (format T "WAVE: ~d/~d~%" x y)
+    (setf (aref (current env) y x) magnitude)))
+
+(defun make-wall (env x y w h)
+  (format T "WALL: ~d/~d ~d-~d~%" x y w h)
+  (push (make-instance 'wall :x x :y y :w w :h h)
+        (walls env))
+  (loop for y from y to (+ y h)
+        do (loop for x from x to (+ x w)
+                 do (when (and (< x (width env))
+                               (< y (height env))
+                               (> x 0)
+                               (> y 0))
+                      (setf (aref (current env) y x) 0.0
+                            (aref (previous env) y x) 0.0
+                            (aref (next env) y x) 0.0)))))
