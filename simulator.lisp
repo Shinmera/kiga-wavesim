@@ -88,6 +88,12 @@
     (setf (aref (current env) y x) magnitude)))
 
 (defun make-wall (env x y w h)
+  (when (< w 0)
+    (setf x (+ x w)
+          w (- w)))
+  (when (< h 0)
+    (setf y (+ y h)
+          h (- h)))
   (format T "WALL: ~d/~d ~d-~d~%" x y w h)
   (push (make-instance 'wall :x x :y y :w w :h h)
         (walls env))
